@@ -1,20 +1,40 @@
-import solution from "../src/solution.js";
+import Config from '../src/config.js'
+import createClient from '../src/client.js';
+import initService from '../src/service.js';
+import { convertToJson } from '../src/helper.js';
+
+const filepath = '/example.txt';
+const data = 'Example text.';
+
+const expectProperties = [ 
+    'Name', 'Prefix', 'MaxKeys', 'IsTruncated', 'Contents.0.Key', 'Contents.0.LastModified', 
+    'Contents.0.ETag', 'Contents.0.Size', 'Contents.0.StorageClass', 'Contents.0.Owner.ID', 
+    'Contents.0.Owner.DisplayName', 'Contents.1.Key', 'Contents.1.LastModified', 'Contents.1.ETag',
+    'Contents.1.Size', 'Contents.1.StorageClass', 'Contents.1.StorageClass', 'Contents.1.Owner.ID', 
+];
 
 describe('Tests', () => {
-    const numberFacts = 100;
+    const config = new Config();
+    const client = createClient(config);
+    const service = initService(client);
 
-    test('is not empty', async () => {
-        const facts = await solution(numberFacts);
-        expect(facts).not.toHaveLength(0);
+    beforeAll(async () => {
+        const bucket = service.createBucket(region, {
+            'x-amz-acl': 'public-write',
+        });
+        const object = service.createObject(filepath, data);
     });
 
-    test('contains more than 5 elements', async () => {
-        const facts = await solution(numberFacts);
-        expect(facts.length).toBeGreaterThan(5);
+    test('get list objects', async () => {
+        const listObjectsResponse = await service.getListObjects();
+        const listObjectsData = convertToJson(listObjectsResponse.data).ListBucketResult;
+
+        expect(listObjectsResponse.status).toBe(200);
+        expect(listObjectsData).toHaveProperty(expectProperties);
     });
 
-    test('length each array element is more than 10 characters', async () => {
-        const facts = await solution(numberFacts);
-        expect(facts.every((fact) => fact.length >= 10)).toBeTruthy();
+    afterAll(async () => {
+        await service.deleteObject(filepath);
+        await service.deleteBucket();
     });
 });
