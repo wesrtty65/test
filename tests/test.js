@@ -30,6 +30,7 @@ describe('Tests', () => {
         const listObjectsData = convertToJson(listObjectsResponse.data).ListBucketResult;
 
         expect(listObjectsResponse.status).toBe(200);
+        // Не знаю, как вычисляются значения и откуда брать их, поэтому проверил, что свойства существуют
         expect(listObjectsData).toHaveProperty(expectProperties);
     });
 
